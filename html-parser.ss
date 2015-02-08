@@ -1,3 +1,6 @@
+;petite --script html-parser.ss hello
+(define vocabulary-search (cadr (command-line)))
+
 (define get-html-content
   (lambda (filename)
     (let* ((input-port (open-input-file filename))
@@ -16,7 +19,7 @@
 	      (cond
 	       ((equal? x #\<) (set! start-tag #t))
 	       ((equal? x #\>) (set! start-tag #f))
-	       (else (if (not start-tag) 
+	       (else (if (not start-tag)
 			 (cond 
 			  ((equal? x #\B) (append-word x) (set! continue 1))
 			  ((equal? x #\r) (if (equal? continue 1) (append-word x)))
@@ -42,4 +45,12 @@
       (display word-need1)
       )))
 
-(get-html-content "/root/workspace/proxy-node/oxford-hello.html")
+;(system (string-append "wget http://192.168.56.21/file?oxford-vocabulary.html -O /root/workspace/proxy-node/" vocabulary-search ".html"))
+(system (string-append "wget http://www.oxfordlearnersdictionaries.com/search/english/direct/?q=" vocabulary-search " -O /root/workspace/proxy-node/" vocabulary-search ".html"))
+
+;(set! vocabulary-search "oxford-hello")
+(get-html-content (string-append "/root/workspace/proxy-node/" vocabulary-search ".html" ))
+
+;(define t (string->utf8 "ɪ"))
+(define t (string->utf8 "b"))
+(string-append "%" (number->string (bytevector-u8-ref t 0) 16))
