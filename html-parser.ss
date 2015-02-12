@@ -22,15 +22,14 @@
 	    (begin (close-port input-port) 
 		   (display word-need)
 		   (display word-need1)
-		   (set! word-need1 '())
-		   ;(set! x (eof-object))
-		   )
+		   (set! word-need1 '()))
 	    (begin
 	      (cond
 	       ((equal? x #\<) (set! start-tag #t))
 	       ((equal? x #\>) (set! start-tag #f))
 	       (else (if (not start-tag)
 			 (get-accent-info x))
+		     (display x)
 		     ;(is-display x)		     
 		     #;
 		     (if (and (not start-tag) (not (equal? continue 0)))
@@ -39,8 +38,7 @@
 				(display x)
 				(display " ")))
 		     ))
-	      (loop (get-char input-port)))))
-      )))
+	      (loop (get-char input-port))))))))
 
 (define get-BrE-info
   (lambda (x)
