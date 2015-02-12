@@ -15,21 +15,29 @@
 (define append-word (lambda (x) (set! word (append word (list x)))))
 
 (define get-vocabulary-info
-  (lambda (filename get-accent-info)
+  (lambda (filename get-dialect-info flag)
     (let* ((input-port (open-input-file filename)))
       (let loop ((x (get-char input-port)))
-	(if (or (eof-object? x) (not (null? word-need1)))
+	(if (or (eof-object? x) (not (null? word-need2)))
 	    (begin (close-port input-port) 
 		   (display word-need)
 		   (display word-need1)
-		   (set! word-need1 '()))
+		   (display word-need2)
+		   (set! word-need1 '())
+		   (set! word-need2 '())
+		   (set! word '()))
 	    (begin
 	      (cond
 	       ((equal? x #\<) (set! start-tag #t))
 	       ((equal? x #\>) (set! start-tag #f))
-	       (else (if (not start-tag)
-			 (get-accent-info x))
-		     (display x)
+	       (else (if (equal? start-tag flag)
+			 (get-dialect-info x)
+			 #;
+			 (begin		;(display x) 
+			   (get-dialect-sound x)
+			   )
+					;(display x)
+			 )
 		     ;(is-display x)		     
 		     #;
 		     (if (and (not start-tag) (not (equal? continue 0)))
@@ -40,7 +48,7 @@
 		     ))
 	      (loop (get-char input-port))))))))
 
-(define get-BrE-info
+(define get-BrE-pronouciation
   (lambda (x)
     (cond 
      ((equal? x #\B) (append-word x) (set! continue 1))
@@ -63,7 +71,7 @@
 	       (append-word x)
 	       (begin (set! continue 0) (set! word '())))))))
 
-(define get-NAmE-info
+(define get-NAmE-pronuciation
   (lambda (x)
     (cond 
      ((equal? x #\N) (append-word x) (set! continue 1))
@@ -87,16 +95,47 @@
 	       (append-word x)
 	       (begin (set! continue 0) (set! word '())))))))
 
+(define get-BrE-sound
+  (lambda (x)
+    (cond
+     ((equal? x #\d) (append-word x) (if (not (equal? continue 14)) (set! continue 1)) (display x))
+     ((equal? x #\a) (if (or (equal? continue 1) (equal? continue 3) (equal? continue 14)) (begin (append-word x) (if (not (equal? continue 14)) (set! continue (+ continue 1))) (display x))))
+     ((equal? x #\t) (if (or (equal? continue 2) (equal? continue 14)) (begin (append-word x) (if (not (equal? continue 14)) (set! continue (+ continue 1))) (display x))))
+     ;((equal? x #\a) (if (or (equal? continue 3) (equal? continue 13)) (begin (append-word x) (set! continue 4) (display x))))
+     ((equal? x #\-) (if (or (equal? continue 4) (equal? continue 8) (equal? continue 13)) (begin (append-word x) (if (not (equal? continue 14)) (set! continue (+ continue 1))) (display x))))
+     ((equal? x #\s) (if (or (equal? continue 5) (equal? continue 14)) (begin (append-word x) (if (not (equal? continue 14)) (set! continue (+ continue 1))) (display x))))
+     ((equal? x #\r) (if (or (equal? continue 6) (equal? continue 14)) (begin (append-word x) (if (not (equal? continue 14)) (set! continue (+ continue 1))) (display x))))
+     ((equal? x #\c) (if (or (equal? continue 7) (equal? continue 14)) (begin (append-word x) (if (not (equal? continue 14)) (set! continue (+ continue 1))) (display x))))
+     ;((equal? x #\-) (if (or (equal? continue 8) (equal? continue 13)) (begin (append-word x) (set! continue (+ continue 1)) (display x))))
+     ((equal? x #\m) (if (or (equal? continue 9) (equal? continue 14)) (begin (append-word x) (if (not (equal? continue 14)) (set! continue (+ continue 1))) (display x))))
+     ((equal? x #\p) (if (or (equal? continue 10) (equal? continue 14)) (begin (append-word x) (if (not (equal? continue 14)) (set! continue (+ continue 1))) (display x))))
+     ((equal? x #\3) (if (or (equal? continue 11) (equal? continue 14)) (begin (append-word x) (if (not (equal? continue 14)) (set! continue (+ continue 1))) (display x))))
+     ((equal? x #\=) (if (or (equal? continue 12) (equal? continue 14)) (begin (append-word x) (if (not (equal? continue 14)) (set! continue (+ continue 1))) (display x))))
+     ((equal? x #\")
+      (if (equal? continue 13)
+          (begin (append-word x)
+		 (display word)
+		 (set! word-need word)
+		 (set! continue 14)
+		 (set! word '()))
+          (if (equal? continue 14)
+              (begin (set! word-need2 word)
+                     (set! continue 0)))))
+     (else (if (equal? continue 14)
+               (begin (append-word x) (display x))
+               (begin (set! continue 0) (set! word '())))))))
+
 (system (string-append "wget http://www.oxfordlearnersdictionaries.com/search/english/direct/?q=" vocabulary-search " -O /root/workspace/proxy-node/" vocabulary-search ".html"))
 
-(get-vocabulary-info (string-append "/root/workspace/proxy-node/" vocabulary-search ".html" ) get-BrE-info)
+(get-vocabulary-info (string-append "/root/workspace/proxy-node/" vocabulary-search ".html" ) get-BrE-pronouciation #f)
+(get-vocabulary-info (string-append "/root/workspace/proxy-node/" vocabulary-search ".html" ) get-BrE-sound #t)
 ;(display continue)
 ;(display times)
 ;(display word)
 ;(display word-need)
 ;(display word-need1)
 ;(display start-tag)
-(get-vocabulary-info (string-append "/root/workspace/proxy-node/" vocabulary-search ".html" ) get-NAmE-info)
+;(get-vocabulary-info (string-append "/root/workspace/proxy-node/" vocabulary-search ".html" ) get-NAmE-info)
 
 (define t (string->utf8 "b"))
 (string-append "%" (number->string (bytevector-u8-ref t 0) 16))
