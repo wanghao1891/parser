@@ -49,6 +49,90 @@
 		     ))
 	      (loop (get-char input-port))))))))
 
+#;
+(define-syntax get-pronunciation
+  (syntax-rules ()
+    ((_ e1 f)
+     (+ e1 f
+	))))
+
+;(get-pronunciation 1 2 3 4 5)
+#;
+(define get-pronunciation
+  (lambda (v1 . v2)
+    (map (lambda (x) (+ x v1)) v2)))
+#;
+(define add 
+  (lambda () (+ x y)))
+#;
+(let ((x 1)
+      (y 2))
+  (add)
+  ((lambda () (+ x y)))
+  )
+
+(length '(("BrE//" #\/ #f) ("data-src-mp3=\"" #\" #t) ("NAmE//" #\/ #f) ("data-src-mp3=\"" #\" #t)))
+
+(define process-file
+  (lambda (name match-list)
+    (let ((input-port (open-input-file name)))
+      (let loop ((x (get-char input-port))
+		 (num-match 0)
+		 (word '())
+		 (match-length (length match-list))
+		 (match-positon 0)
+		 (is-tag #f))
+	(if (eof-object? x)
+	    (close-port input-port)
+	    (begin
+	      (cond
+	       ((equal? x #\<) (set! is-tag #t))
+	       ((equal? x #\>) (set! is-tag #f))
+	       (else
+		(let* ((match (list-ref match-list match-positon))
+		       (start (list-ref match 0))
+		       (end (list-ref match 1))
+		       (flag (list-ref match 2)))
+		  (if (equal? is-tag flag)
+		      (let ((result (process-char x num-match word start end)))
+			(set! num-match (list-ref result 0))
+			(set! word (list-ref result 1)))))))
+	      (loop (get-char input-port)
+		    num-match
+		    word
+		    match-length
+		    match-positon
+		    is-tag)))))))
+
+(define process-char
+  (lambda (char num-match word start end)
+    (let loop ((key (car start))
+	       (key-list (cdr start))
+	       (key-length (length start))
+	       (key-position 0))
+      (if (not (null? list))
+	  (cond
+	   ((equal? char key)
+	    (if (or 
+		 (equal? num-match key-position)
+		 (equal? num-match key-length))
+		(set! word (append word (list x)))
+		(set! num-match (+ num-match 1))))
+	   ((equal? char end)
+	    (if (equal? num-match key-length)
+		(begin
+		  (display word)
+		  (set! num-match 0)
+		  (set! word '())))) 
+	   (else
+	    (if (equal? num-match key-length)
+		(set! word (append word (list x)))
+		(begin (set! num-match 0) (set! word '()))))))
+      (loop (car key-list)
+	    (cdr key-list)
+	    key-length
+	    (+ key-position 1)))))
+
 (define get-BrE-pronouciation
   (lambda (x)
     (cond 
