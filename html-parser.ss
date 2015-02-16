@@ -34,44 +34,20 @@
 			 (if (not (null? word-need1)) (get-dialect-sound x))
 			 (if (null? word-need1) (get-dialect-pronuciation x))
 			 #;
-			 (begin		;(display x) 
-			   (get-dialect-sound x)
-			   )
+			 (begin;(display x) 
+			 (get-dialect-sound x))
 					;(display x)
 			 )
-		     ;(is-display x)		     
+					;(is-display x)     
 		     #;
 		     (if (and (not start-tag) (not (equal? continue 0)))
-			 (begin (display continue)
-				(display " ")
-				(display x)
-				(display " ")))
-		     ))
+		     (begin (display continue)
+		     (display " ")
+		     (display x)
+		     (display " ")))))
 	      (loop (get-char input-port))))))))
 
-#;
-(define-syntax get-pronunciation
-  (syntax-rules ()
-    ((_ e1 f)
-     (+ e1 f
-	))))
-
-;(get-pronunciation 1 2 3 4 5)
-#;
-(define get-pronunciation
-  (lambda (v1 . v2)
-    (map (lambda (x) (+ x v1)) v2)))
-#;
-(define add 
-  (lambda () (+ x y)))
-#;
-(let ((x 1)
-      (y 2))
-  (add)
-  ((lambda () (+ x y)))
-  )
-
-(length '(("BrE//" #\/ #f) ("data-src-mp3=\"" #\" #t) ("NAmE//" #\/ #f) ("data-src-mp3=\"" #\" #t)))
+;(length '(("BrE//" #\/ #f) ("data-src-mp3=\"" #\" #t) ("NAmE//" #\/ #f) ("data-src-mp3=\"" #\" #t)))
 
 (define process-file
   (lambda (name match-list)
@@ -95,83 +71,51 @@
 		       (flag (list-ref match 2)))
 		  (if (equal? is-tag flag)
 		      (let ((result (process-char x num-match word start end)))
-			(display result)
+			;(display result)
 			(set! num-match (list-ref result 0))
-			(set! word (list-ref result 1)))))))
-	      (loop (get-char input-port)
-		    num-match
-		    word
-		    match-length
-		    match-positon
-		    is-tag)))))))
-
-;(string->list "BrE//")
-
-;(< 1 2)
+			(set! word (list-ref result 1))
+			(if (list-ref result 2)
+			    (set! match-positon (+ match-positon 1))))))))
+	      (if (< match-positon match-length)
+		  (loop (get-char input-port)
+			num-match
+			word
+			match-length
+			match-positon
+			is-tag))))))))
 
 (define process-char
   (lambda (char num-match word start end)
-    (display "process-char") (display " ") (display char) (display " ") (display num-match) (display " ") (display word) (display " ") (display start) (display " ") (display end) (newline)
+    ;(display "process-char") (display " ") (display char) (display " ") (display num-match) (display " ") (display word) (display " ") (display start) (display " ") (display end) (newline)
     (let ((num-match-tmp num-match)
-	  (key-length (length start)))
+	  (key-length (length start))
+	  (is-done #f))
       (cond
        ((< num-match key-length)
 	(if (equal? char (list-ref start num-match))
 	    (set! num-match (+ num-match 1))))
        (else
 	(if (equal? char end)
-	    (begin (set! word '()) (set! num-match 0))
-	    (set! word (append word (list char))))))
-      #;
-      (let loop ((key (car start))
-		 (key-list (cdr start))
-					;(key-length (length start))
-		 (key-position 0)
-		 (num-match-tmp num-match))
-	(if (not ( null? key-list))
 	    (begin
-	      (cond
-	       ((equal? char key) (display "key") (display " ") (display key) (display " ") (display key-position) (newline) ;(display char) (display key) (display num-match) (display key-position)
-					;(display "process-char") (display " ") (display char) (display " ") (display num-match) (display " ") (display word) (display " ") (display start) (display " ") (display end) (newline)
-		(if (or 
-		     (equal? num-match key-position)
-		     (equal? num-match key-length))
-					;(set! word (append word (list char)))
-		    (set! num-match (+ num-match 1))))
-	       #;
-	       ((equal? char end) (display "end") (display " ") (display end) (newline)
-	       (if (equal? num-match key-length)
-	       (begin
-	       (display word)
-	       (set! num-match 0)
-	       (set! word '())))) 
-	       (else (display "else") (display " ") (display char) (newline)
-		     (if (equal? num-match key-length)
-			 (set! word (append word (list char)))
-					;(begin (set! num-match 0) (set! word '()))
-			 )
-		     (loop (car key-list)
-			   (cdr key-list)
-					;key-length
-			   (+ key-position 1)
-			   num-match-tmp))))))
-      ;(display num-match) (display " ") (display key-length) (newline)
-      #;
-      (if (and (equal? char end) (equal? num-match key-length))
-	  (begin (display "end") (display " ") (display end) (newline) (display word)
-		 (set! num-match 0)
-		 (set! word '())))
-      ;(display "return ") (display num-match) (display " ") (display word) (newline)
+	      (display (list->string word))
+	      (newline)
+	      (set! word '())
+	      (set! num-match 0) 
+	      (set! is-done #t)
+	      )
+	    (set! word (append word (list char))))))
       (list (if (and
 		 (equal? num-match-tmp num-match)
 		 (< num-match key-length))
 		0
 		num-match)
-	    word))))
+	    word
+	    is-done))))
 
 ;(process-char #\B 0 '() '(#\B #\r #\E #\/ #\/) #\/)
-
-(process-file "/root/workspace/proxy-node/hello.html" '(("BrE//" #\/ #f)))
+;("BrE//" #\/ #f)
+;(start end is-tag)
+(process-file "/root/workspace/proxy-node/hello.html" '(("BrE//" #\/ #f) ("data-src-mp3=\"" #\" #t) ("NAmE//" #\/ #f) ("data-src-mp3=\"" #\" #t)))
 
 (define get-BrE-pronouciation
   (lambda (x)
