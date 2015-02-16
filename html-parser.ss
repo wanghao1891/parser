@@ -77,11 +77,11 @@
   (lambda (name match-list)
     (let ((input-port (open-input-file name)))
       (let loop ((x (get-char input-port))
-		 (num-match 0)
-		 (word '())
-		 (match-length (length match-list))
-		 (match-positon 0)
-		 (is-tag #f))
+		 (num-match 0);the number of matching.
+		 (word '());store the char of matching.
+		 (match-length (length match-list));the length of list of matchinig pair.
+		 (match-positon 0);the position of the list of matching pair.
+		 (is-tag #f));check wether the char is the tag.
 	(if (eof-object? x)
 	    (close-port input-port)
 	    (begin
@@ -90,11 +90,12 @@
 	       ((equal? x #\>) (set! is-tag #f))
 	       (else
 		(let* ((match (list-ref match-list match-positon))
-		       (start (list-ref match 0))
+		       (start (string->list (list-ref match 0)))
 		       (end (list-ref match 1))
 		       (flag (list-ref match 2)))
 		  (if (equal? is-tag flag)
 		      (let ((result (process-char x num-match word start end)))
+			(display result)
 			(set! num-match (list-ref result 0))
 			(set! word (list-ref result 1)))))))
 	      (loop (get-char input-port)
@@ -104,34 +105,73 @@
 		    match-positon
 		    is-tag)))))))
 
+;(string->list "BrE//")
+
+;(< 1 2)
+
 (define process-char
   (lambda (char num-match word start end)
-    (let loop ((key (car start))
-	       (key-list (cdr start))
-	       (key-length (length start))
-	       (key-position 0))
-      (if (not (null? list))
-	  (cond
-	   ((equal? char key)
-	    (if (or 
-		 (equal? num-match key-position)
-		 (equal? num-match key-length))
-		(set! word (append word (list x)))
-		(set! num-match (+ num-match 1))))
-	   ((equal? char end)
-	    (if (equal? num-match key-length)
-		(begin
-		  (display word)
-		  (set! num-match 0)
-		  (set! word '())))) 
-	   (else
-	    (if (equal? num-match key-length)
-		(set! word (append word (list x)))
-		(begin (set! num-match 0) (set! word '()))))))
-      (loop (car key-list)
-	    (cdr key-list)
-	    key-length
-	    (+ key-position 1)))))
+    (display "process-char") (display " ") (display char) (display " ") (display num-match) (display " ") (display word) (display " ") (display start) (display " ") (display end) (newline)
+    (let ((num-match-tmp num-match)
+	  (key-length (length start)))
+      (cond
+       ((< num-match key-length)
+	(if (equal? char (list-ref start num-match))
+	    (set! num-match (+ num-match 1))))
+       (else
+	(if (equal? char end)
+	    (begin (set! word '()) (set! num-match 0))
+	    (set! word (append word (list char))))))
+      #;
+      (let loop ((key (car start))
+		 (key-list (cdr start))
+					;(key-length (length start))
+		 (key-position 0)
+		 (num-match-tmp num-match))
+	(if (not ( null? key-list))
+	    (begin
+	      (cond
+	       ((equal? char key) (display "key") (display " ") (display key) (display " ") (display key-position) (newline) ;(display char) (display key) (display num-match) (display key-position)
+					;(display "process-char") (display " ") (display char) (display " ") (display num-match) (display " ") (display word) (display " ") (display start) (display " ") (display end) (newline)
+		(if (or 
+		     (equal? num-match key-position)
+		     (equal? num-match key-length))
+					;(set! word (append word (list char)))
+		    (set! num-match (+ num-match 1))))
+	       #;
+	       ((equal? char end) (display "end") (display " ") (display end) (newline)
+	       (if (equal? num-match key-length)
+	       (begin
+	       (display word)
+	       (set! num-match 0)
+	       (set! word '())))) 
+	       (else (display "else") (display " ") (display char) (newline)
+		     (if (equal? num-match key-length)
+			 (set! word (append word (list char)))
+					;(begin (set! num-match 0) (set! word '()))
+			 )
+		     (loop (car key-list)
+			   (cdr key-list)
+					;key-length
+			   (+ key-position 1)
+			   num-match-tmp))))))
+      ;(display num-match) (display " ") (display key-length) (newline)
+      #;
+      (if (and (equal? char end) (equal? num-match key-length))
+	  (begin (display "end") (display " ") (display end) (newline) (display word)
+		 (set! num-match 0)
+		 (set! word '())))
+      ;(display "return ") (display num-match) (display " ") (display word) (newline)
+      (list (if (and
+		 (equal? num-match-tmp num-match)
+		 (< num-match key-length))
+		0
+		num-match)
+	    word))))
+
+;(process-char #\B 0 '() '(#\B #\r #\E #\/ #\/) #\/)
+
+(process-file "/root/workspace/proxy-node/hello.html" '(("BrE//" #\/ #f)))
 
 (define get-BrE-pronouciation
   (lambda (x)
@@ -221,9 +261,9 @@
                (begin (append-word x) ;(display x)
 		      )
                (begin (set! continue 0) (set! word '())))))))
-
+#;
 (system (string-append "wget http://www.oxfordlearnersdictionaries.com/search/english/direct/?q=" vocabulary-search " -O /root/workspace/proxy-node/" vocabulary-search ".html"))
-
+#;
 (get-vocabulary-info (string-append "/root/workspace/proxy-node/" vocabulary-search ".html" ) get-BrE-pronouciation)
 ;(get-vocabulary-info (string-append "/root/workspace/proxy-node/" vocabulary-search ".html" ) get-BrE-sound #t)
 ;(display continue)
@@ -232,6 +272,7 @@
 ;(display word-need)
 ;(display word-need1)
 ;(display start-tag)
+#;
 (get-vocabulary-info (string-append "/root/workspace/proxy-node/" vocabulary-search ".html" ) get-NAmE-pronuciation)
 
 (define t (string->utf8 "b"))
