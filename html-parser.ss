@@ -54,7 +54,7 @@
     (let ((input-port (open-input-file name)))
       (let loop ((x (get-char input-port))
 		 (num-match 0);the number of matching.
-		 (word '());store the char of matching.
+		 (word "");store the char of matching.
 		 (match-length (length match-list));the length of list of matchinig pair.
 		 (match-positon 0);the position of the list of matching pair.
 		 (is-tag #f));check wether the char is the tag.
@@ -68,9 +68,10 @@
 		(let* ((match (list-ref match-list match-positon))
 		       (start (string->list (list-ref match 0)))
 		       (end (list-ref match 1))
-		       (flag (list-ref match 2)))
-		  (if (equal? is-tag flag)
-		      (let ((result (process-char x num-match word start end)))
+		       (flag-tag (list-ref match 2))
+		       (flag-encode (list-ref match 3)))
+		  (if (equal? is-tag flag-tag)
+		      (let ((result (process-char x num-match word start end flag-encode)))
 			;(display result)
 			(set! num-match (list-ref result 0))
 			(set! word (list-ref result 1))
@@ -85,7 +86,7 @@
 			is-tag))))))))
 
 (define process-char
-  (lambda (char num-match word start end)
+  (lambda (char num-match word start end flag-encode)
     ;(display "process-char") (display " ") (display char) (display " ") (display num-match) (display " ") (display word) (display " ") (display start) (display " ") (display end) (newline)
     (let ((num-match-tmp num-match)
 	  (key-length (length start))
@@ -97,13 +98,17 @@
        (else
 	(if (equal? char end)
 	    (begin
-	      (display (list->string word))
+	      (display word)
 	      (newline)
-	      (set! word '())
+	      (set! word "")
 	      (set! num-match 0) 
 	      (set! is-done #t)
 	      )
-	    (set! word (append word (list char))))))
+	    (set! word (string-append 
+			word 
+			(if flag-encode
+			    (encode-uri char)
+			    (string char)))))))
       (list (if (and
 		 (equal? num-match-tmp num-match)
 		 (< num-match key-length))
@@ -112,10 +117,21 @@
 	    word
 	    is-done))))
 
+(define encode-uri
+  (lambda (char)
+    (let* ((vu8 (string->utf8 (string char)))
+	  (u8 (bytevector-u8-ref vu8 0))
+	  (su8 (number->string u8 16)))
+      (string-append "%" su8))))
+
+;(list->string '(#\b "%62" #\b))
+
+(string-append (string #\a) (string #\b))
+
 ;(process-char #\B 0 '() '(#\B #\r #\E #\/ #\/) #\/)
-;("BrE//" #\/ #f)
-;(start end is-tag)
-(process-file "/root/workspace/proxy-node/hello.html" '(("BrE//" #\/ #f) ("data-src-mp3=\"" #\" #t) ("NAmE//" #\/ #f) ("data-src-mp3=\"" #\" #t)))
+;("BrE//" #\/ #f #t)
+;(start end is-tag is-encode)
+(process-file "/root/workspace/proxy-node/hello.html" '(("BrE//" #\/ #f #t) ("data-src-mp3=\"" #\" #t #f) ("NAmE//" #\/ #f #t) ("data-src-mp3=\"" #\" #t #f)))
 
 (define get-BrE-pronouciation
   (lambda (x)
