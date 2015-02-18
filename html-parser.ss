@@ -101,26 +101,3 @@
 (system (string-append "wget http://www.oxfordlearnersdictionaries.com/search/english/direct/?q=" vocabulary-search " -O /root/workspace/proxy-node/" vocabulary-search ".html"))
 (process-file (string-append "/root/workspace/proxy-node/" vocabulary-search ".html")
 	      '(("BrE//" #\/ #f #t) ("data-src-mp3=\"" #\" #t #f) ("NAmE//" #\/ #f #t) ("data-src-mp3=\"" #\" #t #f)))
-
-(define get-BrE-pronouciation
-  (lambda (x)
-    (cond 
-     ((equal? x #\B) (append-word x) (set! continue 1))
-     ((equal? x #\r) (if (or (equal? continue 1) (equal? continue 2)) (append-word x)))
-     ((equal? x #\E) (if (or (equal? continue 1) (equal? continue 2)) (append-word x)))
-     ((equal? x #\/) 
-      (if (equal? continue 1) 
-	  (begin (append-word x) 
-		 (if (equal? times 0) 
-		     (set! times 1) 
-		     (begin 
-		       (set! word-need word) 
-		       (set! continue 2)
-		       (set! word '()))))
-	  (if (equal? continue 2) 
-	      (begin (set! word-need1 word)
-		     (set! continue 0)
-		     (set! times 0)))))
-     (else (if (equal? continue 2)
-	       (append-word x)
-	       (begin (set! continue 0) (set! word '())))))))
