@@ -51,7 +51,8 @@
 
 (define process-file
   (lambda (name match-list)
-    (let ((input-port (open-input-file name)))
+    (let ((input-port (open-input-file name))
+	  (insert-command "cd /root/workspace/database/; petite --script insert.ss data-01 hello"))
       (let loop ((x (get-char input-port))
 		 (num-match 0);the number of matching.
 		 (word "");store the char of matching.
@@ -71,22 +72,25 @@
 		       (flag-tag (list-ref match 2))
 		       (flag-encode (list-ref match 3)))
 		  (if (equal? is-tag flag-tag)
-		      (let ((result (process-char x num-match word start end flag-encode)))
+		      (let ((result (process-char x num-match word start end flag-encode insert-command)))
 			;(display result)
 			(set! num-match (list-ref result 0))
 			(set! word (list-ref result 1))
 			(if (list-ref result 2)
-			    (set! match-positon (+ match-positon 1))))))))
+			    (set! match-positon (+ match-positon 1)))
+			(set! insert-command (list-ref result 3)))))))
 	      (if (< match-positon match-length)
 		  (loop (get-char input-port)
 			num-match
 			word
 			match-length
 			match-positon
-			is-tag))))))))
+			is-tag)))))
+      (display insert-command)
+      (system insert-command))))
 
 (define process-char
-  (lambda (char num-match word start end flag-encode)
+  (lambda (char num-match word start end flag-encode insert-command)
     ;(display "process-char") (display " ") (display char) (display " ") (display num-match) (display " ") (display word) (display " ") (display start) (display " ") (display end) (newline)
     (let ((num-match-tmp num-match)
 	  (key-length (length start))
@@ -100,6 +104,7 @@
 	    (begin
 	      (display word)
 	      (newline)
+	      (set! insert-command ( string-append insert-command " " word))
 	      (set! word "")
 	      (set! num-match 0) 
 	      (set! is-done #t)
@@ -115,18 +120,29 @@
 		0
 		num-match)
 	    word
-	    is-done))))
+	    is-done
+	    insert-command))))
 
 (define encode-uri
   (lambda (char)
     (let* ((vu8 (string->utf8 (string char)))
-	  (u8 (bytevector-u8-ref vu8 0))
-	  (su8 (number->string u8 16)))
-      (string-append "%" su8))))
+	   (length (bytevector-length vu8)))
+      (let loop ((position 0))
+	(cond
+	 ((equal? position length) "")
+	 (else 
+	  (string-append
+	   "%"
+	   (number->string 
+	    (bytevector-u8-ref vu8 position)
+	    16)
+	   (loop (+ position 1)))))))))
+
+;(encode-uri #\ə)
 
 ;(list->string '(#\b "%62" #\b))
-
-(string-append (string #\a) (string #\b))
+;(bytevector-length (string->utf8 "ə"))
+;(string-append (string #\a) (string #\b))
 
 ;(process-char #\B 0 '() '(#\B #\r #\E #\/ #\/) #\/)
 ;("BrE//" #\/ #f #t)
