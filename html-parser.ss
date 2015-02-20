@@ -95,9 +95,55 @@
 	    16)
 	   (loop (+ position 1)))))))))
 
+(define string-split
+  (lambda (src separator)
+    (let ((src-list (string->list src))
+	  (separator-list (string->list separator))
+	  (num-match 0)
+	  (piece ""))
+      (let loop (;(char (car src-list))
+		 (ls src-list))
+	(cond
+	 ((null? ls) (list piece))
+	 (else
+	  (let ((result (process-string-split (car ls) separator-list num-match piece)))
+	    ;(display result)
+	    (set! num-match (list-ref result 0))
+	    (set! piece (list-ref result 1))
+	    (append
+	     (if (list-ref result 2)
+		 (let ((piece-tmp piece))
+		   (set! piece "")
+		   (list piece-tmp))
+		 '())
+	     (loop (cdr ls))))))))))
+
+;(cdr '())
+;(append '(1 2 3) '() '() '())
+
+(define process-string-split
+  (lambda (char separator num-match piece)
+    ;(display "(process-string-split ") (display char) (display " ") (display separator) (display " ") (display num-match) (display " ") (display piece)
+    (let ((num-match-tmp num-match)
+	  (key-length (length separator))
+	  (is-done #f))
+      (if (equal? char (list-ref separator num-match))                                                                                                                           
+	  (set! num-match (+ num-match 1))                                                                                                                                       
+	  (begin (set! num-match 0)                                                                                                                                              
+		 (set! piece (string-append piece (string char)))))
+      (if (= num-match key-length)                                                                                                                                               
+	  (begin (set! num-match 0)                                                                                                                                              
+		 (set! is-done #t)))
+      (list num-match piece is-done))))
+
+;(process-string-split #\h '(#\/) 0 "")
+;(string-split "http://www.oxfordlearnersdictionaries.com/media/english/uk_pron/h/hel/hello/hello__gb_1.mp3" "/")
+
 ;(process-char #\B 0 '() '(#\B #\r #\E #\/ #\/) #\/)
 ;("BrE//" #\/ #f #t)
 ;(start end is-tag is-encode)
-(system (string-append "wget http://www.oxfordlearnersdictionaries.com/search/english/direct/?q=" vocabulary-search " -O /root/workspace/proxy-node/" vocabulary-search ".html"))
-(process-file (string-append "/root/workspace/proxy-node/" vocabulary-search ".html")
+(define out-file (string-append "/root/workspace/proxy-node/" vocabulary-search ".html"))
+(system (string-append "wget http://www.oxfordlearnersdictionaries.com/search/english/direct/?q=" vocabulary-search " -O " out-file))
+(process-file out-file
 	      '(("BrE//" #\/ #f #t) ("data-src-mp3=\"" #\" #t #f) ("NAmE//" #\/ #f #t) ("data-src-mp3=\"" #\" #t #f)))
+(delete-file out-file)
