@@ -46,6 +46,12 @@
       (display insert-command)
       (system insert-command))))
 
+(define process-url
+  (lambda (url)
+    (string-append "file?" 
+		   (cadr 
+		    (string-split url "www.oxfordlearnersdictionaries.com/")))))
+
 (define process-char
   (lambda (char num-match word start end flag-encode insert-command)
     ;(display "process-char") (display " ") (display char) (display " ") (display num-match) (display " ") (display word) (display " ") (display start) (display " ") (display end) (newline)
@@ -61,13 +67,15 @@
 	    (begin
 	      ;(display word)
 	      ;(newline)
-	      (set! insert-command (string-append insert-command " " word))
 	      (if (not flag-encode)
-		  (download-file word))
+		  (begin (download-file word)
+					(set! word (process-url word))
+			 ))
+	      (set! insert-command
+		    (string-append insert-command " " word))
 	      (set! word "")
 	      (set! num-match 0) 
-	      (set! is-done #t)
-	      )
+	      (set! is-done #t))
 	    (set! word (string-append 
 			word 
 			(if flag-encode
@@ -92,11 +100,10 @@
 				  (cadr 
 				   (string-split url "www.oxfordlearnersdictionaries.com/"))
 				  filename)))))
-      ;(display (string-append path filename))
       (system (string-append "mkdir -p " path))
       (system (string-append "wget " url " -O " path filename)))))
 
-;(download-mp3 "http://www.oxfordlearnersdictionaries.com/media/english/uk_pron/h/hel/hello/hello__gb_1.mp3")
+;(download-file "http://www.oxfordlearnersdictionaries.com/media/english/uk_pron/h/hel/hello/hello__gb_1.mp3")
 
 (define encode-uri
   (lambda (char)
