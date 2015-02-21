@@ -62,6 +62,8 @@
 	      ;(display word)
 	      ;(newline)
 	      (set! insert-command (string-append insert-command " " word))
+	      (if (not flag-encode)
+		  (download-mp3 word))
 	      (set! word "")
 	      (set! num-match 0) 
 	      (set! is-done #t)
@@ -79,6 +81,33 @@
 	    word
 	    is-done
 	    insert-command))))
+
+(define download-mp3
+  (lambda (url)
+    (let* ((ls (string-split url "/"))
+	   (filename (list-ref ls (- (length ls) 1)))
+	   (path (string-append http-path 
+				(car
+				 (string-split 
+				  (cadr 
+				   (string-split url "www.oxfordlearnersdictionaries.com/"))
+				  filename)))))
+      ;(display (string-append path filename))
+      (system (string-append "mkdir -p " path))
+      (system (string-append "wget " url " -O " path filename)))))
+
+;(string-split "http://www.oxfordlearnersdictionaries.com/media/english/uk_pron/h/hel/hello/hello__gb_1.mp3" "/")
+;(string-split "media/english/uk_pron/h/hel/hello/hello__gb_1.mp3" "hello__gb_1.mp3")
+
+;(define url "http://www.oxfordlearnersdictionaries.com/media/english/uk_pron/h/hel/hello/hello__gb_1.mp3")
+;(define filename "hello__gb_1.mp3")
+#;
+(car
+ (string-split
+  (cadr (string-split url "www.oxfordlearnersdictionaries.com/"))
+  filename))
+
+;(download-mp3 "http://www.oxfordlearnersdictionaries.com/media/english/uk_pron/h/hel/hello/hello__gb_1.mp3")
 
 (define encode-uri
   (lambda (char)
@@ -126,11 +155,13 @@
     (let ((num-match-tmp num-match)
 	  (key-length (length separator))
 	  (is-done #f))
-      (if (equal? char (list-ref separator num-match))                                                                                                       
-	  (begin (set! num-match (+ num-match 1))
-		 (set! piece-tmp (string-append piece-tmp (string char))))
-	  (begin (if (> num-match 0)
-		     (set! piece (string-append piece piece-tmp)))
+      (cond 
+       ((equal? char (list-ref separator num-match))                                                                         
+	(set! num-match (+ num-match 1))
+	(set! piece-tmp (string-append piece-tmp (string char))))
+       (else (if (> num-match 0)
+		 (begin (set! piece (string-append piece piece-tmp))
+			(set! piece-tmp "")))
 		 (set! num-match 0)                                                             
 		 (set! piece (string-append piece (string char)))))
       (if (= num-match key-length)                                                                                    
@@ -140,12 +171,15 @@
       (list num-match piece piece-tmp is-done))))
 
 ;(process-string-split #\h '(#\/) 0 "")
-;(string-split "http://www.oxfordlearnersdictionaries.com/media/english/uk_pron/h/hel/hello/hello__gb_1.mp3" "media")
+(string-split "http://www.oxfordlearnersdictionaries.com/media/english/uk_pron/h/hel/hello/hello__gb_1.mp3" "www.oxfordlearnersdictionaries.com/")
+(string-split "http://www.oxfordlearnersdictionaries.com/media/english/uk_pron/h/hel/hello/hello__gb_1.mp3" "hello__gb_1.mp3")
+
 
 ;(process-char #\B 0 '() '(#\B #\r #\E #\/ #\/) #\/)
 ;("BrE//" #\/ #f #t)
 ;(start end is-tag is-encode)
-(define out-file (string-append "/root/workspace/proxy-node/" vocabulary-search ".html"))
+(define http-path "/root/workspace/proxy-node/")
+(define out-file (string-append http-path vocabulary-search ".html"))
 (system (string-append "wget http://www.oxfordlearnersdictionaries.com/search/english/direct/?q=" vocabulary-search " -O " out-file))
 (process-file out-file
 	      '(("BrE//" #\/ #f #t) ("data-src-mp3=\"" #\" #t #f) ("NAmE//" #\/ #f #t) ("data-src-mp3=\"" #\" #t #f)))
