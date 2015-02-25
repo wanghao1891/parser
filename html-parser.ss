@@ -51,7 +51,7 @@
 			match-length
 			match-positon
 			is-tag)))))
-      (display insert-command)
+      ;(display insert-command)
       (system insert-command)
       )))
 
