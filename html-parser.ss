@@ -20,8 +20,8 @@
 		 (is-tag #f));check wether the char is the tag.
 	(if (eof-object? x)
 	    (close-port input-port)
-	    (begin (if (or (equal? x #\newline) (equal? x #\tab))
-		       (display "have a newline.")
+	    (begin (if (and (not (equal? x #\newline)) (not (equal? x #\tab)))
+		       ;(display "have a newline.")
 		       (cond
 			((equal? x #\<) (set! is-tag #t))
 			((equal? x #\>) (set! is-tag #f))
@@ -63,7 +63,7 @@
 
 (define process-char
   (lambda (char num-match num-match-end word word-tmp start end flag-encode flag-url insert-command)
-    (display "process-char") (display " ") (display char) (display " ") (display num-match) (display " ") (display word) (display " ") (display start) (display " ") (display end) (newline)
+    ;(display "process-char") (display " ") (display char) (display " ") (display num-match) (display " ") (display word) (display " ") (display start) (display " ") (display end) (newline)
     (let ((num-match-tmp num-match)
 	  (key-length (length start))
 	  (key-length-end (length end))
