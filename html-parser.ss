@@ -9,7 +9,7 @@
   (lambda (name match-list)
     (let ((input-port (open-input-file name))
 	  (insert-command 
-	   (string-append "cd /root/workspace/database/; petite --script insert.ss data-01 " vocabulary-search)))
+	   (string-append "cd " (current-directory) "/../database/; petite --script insert.ss data-01 " vocabulary-search)))
       (let loop ((x (get-char input-port))
 		 (num-match 0);the number of matching.
 		 (num-match-end 0)
@@ -119,10 +119,10 @@
   (lambda (url)
     (let* ((ls (string-split url "/"))
 	   (filename (list-ref ls (- (length ls) 1)))
-	   (path (string-append http-path 
+	   (path (string-append http-path
 				(car
-				 (string-split 
-				  (cadr 
+				 (string-split
+				  (cadr
 				   (string-split url "www.oxfordlearnersdictionaries.com/"))
 				  filename)))))
       (system (string-append "mkdir -p " path))
@@ -137,10 +137,10 @@
       (let loop ((position 0))
 	(cond
 	 ((equal? position length) "")
-	 (else 
+	 (else
 	  (string-append
 	   "%"
-	   (number->string 
+	   (number->string
 	    (bytevector-u8-ref vu8 position)
 	    16)
 	   (loop (+ position 1)))))))))
@@ -176,16 +176,16 @@
     (let ((num-match-tmp num-match)
 	  (key-length (length separator))
 	  (is-done #f))
-      (cond 
-       ((equal? char (list-ref separator num-match))                                                                         
+      (cond
+       ((equal? char (list-ref separator num-match))
 	(set! num-match (+ num-match 1))
 	(set! piece-tmp (string-append piece-tmp (string char))))
        (else (if (> num-match 0)
 		 (begin (set! piece (string-append piece piece-tmp))
 			(set! piece-tmp "")))
-		 (set! num-match 0)                                                             
+		 (set! num-match 0)
 		 (set! piece (string-append piece (string char)))))
-      (if (= num-match key-length)                                                                                    
+      (if (= num-match key-length)
 	  (begin (set! num-match 0)
 		 (set! piece-tmp "")
 		 (set! is-done #t)))
@@ -197,7 +197,7 @@
 ;(process-char #\B 0 '() '(#\B #\r #\E #\/ #\/) #\/)
 ;("BrE//" #\/ #f #t #f)
 ;(start end is-tag is-encode is-url)
-(define http-path "/root/workspace/proxy-node/")
+(define http-path (string-append (current-directory) "/../proxy-node/"))
 (define out-file (string-append http-path "out/" vocabulary-search ".html"))
 (system (string-append "wget http://www.oxfordlearnersdictionaries.com/search/english/direct/?q=" vocabulary-search " -O " out-file))
 (process-file out-file
