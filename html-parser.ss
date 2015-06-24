@@ -8,7 +8,7 @@
 (define process-file
   (lambda (name match-list)
     (let ((input-port (open-input-file name))
-	  (insert-command 
+	  (insert-command
 	   (string-append "cd " (current-directory) "/../database/; petite --script insert.ss data-01 " vocabulary-search)))
       (let loop ((x (get-char input-port))
 		 (num-match 0);the number of matching.
